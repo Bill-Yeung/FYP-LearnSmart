@@ -10,6 +10,7 @@ from app.repositories.game.game_repository import GameRepository
 from app.repositories.game.subject_repository import SubjectRepository
 from app.services.ai.prompts import get_prompt, format_hints_section
 from app.services.game.script_pipeline import ScriptGenerationPipeline
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -321,8 +322,8 @@ class GameService:
         puzzle_req_str = "\n".join(req_texts) if req_texts else "- Provide a balanced mix of basic and advanced questions."
 
         client = OpenAI(
-            api_key="sk-6e27b47c3d40410d8a0af17ae75763bf",
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+            api_key=settings.qwen_api_key,
+            base_url=settings.qwen_base_url,
         )
         prompt = get_prompt("generate_script")
         data = {

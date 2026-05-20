@@ -442,6 +442,7 @@ coverage/
 tmp/
 temp/
 *.tmp
+*.tmp2
 *.bak
 *.backup
 *.orig
