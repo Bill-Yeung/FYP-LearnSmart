@@ -1,0 +1,17 @@
+[
+  {
+    "type": "standard",
+    "question": "What is the capital of France?",
+    "answer": "Paris"
+  },
+  {
+    "type": "standard",
+    "question": "What is 2+2?",
+    "answer": "4"
+  },
+  {
+    "type": "standard",
+    "question": "Who wrote 'Pride and Prejudice'?",
+    "answer": "Jane Austen"
+  }
+]

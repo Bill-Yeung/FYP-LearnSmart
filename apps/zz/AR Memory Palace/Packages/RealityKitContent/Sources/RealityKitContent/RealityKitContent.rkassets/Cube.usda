@@ -1,0 +1,13 @@
+#usda 1.0
+(
+    defaultPrim = "Root"
+)
+
+def Xform "Root"
+{
+    def Cube "Cube"
+    {
+        float3 size = (0.1, 0.1, 0.1)
+        uniform token visibility = "inherits"
+    }
+}

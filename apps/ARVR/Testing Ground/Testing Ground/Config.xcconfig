@@ -1,0 +1,4 @@
+// Cloudflare Access service token — baked into Info.plist at build time.
+// Do NOT commit this file with real values to git.
+CF_ACCESS_CLIENT_ID = 4abd4b67272aee41ad2ac9b404b8a5df.access
+CF_ACCESS_CLIENT_SECRET = e369b19b97f765a63e1fae373845eb53fb7de6d808da0bdfdd086f6e57d0ef0e

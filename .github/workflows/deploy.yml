@@ -1,0 +1,166 @@
+name: deploy on my mac mini
+on:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: discord notify deploy starting
+        id: discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          RESP=$(curl -H "Content-Type: application/json" \
+            -d '{"content":"Deploy緊 等一陣... (˶ᴗ_ᴗ˵) ᶻ z 𐰁"}' \
+            "${DISCORD_WEBHOOK_URL}?wait=true" \
+            | python3 -c "import sys, json; print(json.load(sys.stdin)['id'])")
+
+          echo "resp=$RESP" >> "$GITHUB_OUTPUT"
+    
+      # - name: put clip in build
+      #   run: |
+      #     rm -rf backend/models/clip
+      #     mkdir -p backend/models/clip
+      #     cp -a /Users/ituser/model-cache/clip/. backend/models/clip/
+
+      - name: ensure gateway running
+        run: |
+          GATEWAY_URL="http://127.0.0.1:8001/health"
+          VENV="/Users/ituser/gateway-venv"
+          echo "Restarting gateway so macmini/.env.prod is applied..."
+          pkill -f 'python3.*app\.py.*env-file' || true
+          pkill -f 'gateway-venv.*app\.py' || true
+          sleep 2
+
+          # Create venv if it doesn't exist
+          if [ ! -d "$VENV" ]; then
+            echo "Creating venv at $VENV..."
+            python3 -m venv "$VENV"
+          fi
+
+          source "$VENV/bin/activate"
+          pip install -q -r macmini/requirements.txt
+
+          echo "Gateway bind config:"
+          grep -E '^(BIND_HOST|PORT)=' macmini/.env.prod || true
+
+          GATEWAY_VENV="$VENV" GATEWAY_LOG="/Users/ituser/gateway.log" bash macmini/install_launch_agent.sh
+
+          # Wait for health (first-time model download can take minutes)
+          for i in $(seq 1 60); do
+            if curl -s "$GATEWAY_URL" > /dev/null 2>&1; then
+              echo "Gateway ready"
+              tail -n 40 /Users/ituser/gateway.log || true
+              break
+            fi
+            echo "Waiting for gateway... ($i/60)"
+            tail -n 20 /Users/ituser/gateway.log || true
+            sleep 10
+          done
+
+          # Final check — fail deploy if gateway is not healthy
+          if ! curl -s "$GATEWAY_URL" > /dev/null 2>&1; then
+            echo "::error::Gateway not healthy at $GATEWAY_URL — aborting deploy"
+            tail -n 100 /Users/ituser/gateway.log || true
+            exit 1
+          fi
+
+      - name: restart docker
+        id: deploy
+        run: |
+          start=$(date +%s)
+          DOCKER="/Applications/Docker.app/Contents/Resources/bin/docker"
+          COMPOSE="$DOCKER compose -f docker-compose.prod.yml --env-file .env.prod"
+
+          # Check if backend-related files changed since last deploy
+          BACKEND_CHANGED=$(git diff --name-only HEAD~1 HEAD -- backend/ requirements.txt docker-compose.prod.yml 2>/dev/null | head -1)
+          # Check if frontend-related files changed since last deploy
+          WEB_CHANGED=$(git diff --name-only HEAD~1 HEAD -- apps/web/ deploy/nginx/ docker-compose.prod.yml 2>/dev/null | head -1)
+
+          $COMPOSE down -v
+
+          # Rebuild backend only if changed OR if image doesn't exist
+          BACKEND_IMAGE=$($DOCKER images -q se_group10_fyp-backend 2>/dev/null)
+          if [ -n "$BACKEND_CHANGED" ] || [ -z "$BACKEND_IMAGE" ]; then
+            echo "Rebuilding backend (changed=$BACKEND_CHANGED, image=${BACKEND_IMAGE:-missing})..."
+            $COMPOSE build backend
+          else
+            echo "Backend unchanged — skipping backend rebuild"
+          fi
+
+          # Rebuild nginx only if frontend changed OR if image doesn't exist
+          NGINX_IMAGE=$($DOCKER images -q se_group10_fyp-nginx 2>/dev/null)
+          if [ -n "$WEB_CHANGED" ] || [ -z "$NGINX_IMAGE" ]; then
+            echo "Rebuilding nginx (changed=$WEB_CHANGED, image=${NGINX_IMAGE:-missing})..."
+            $COMPOSE build nginx
+          else
+            echo "Frontend unchanged — skipping nginx rebuild"
+          fi
+
+          $COMPOSE up -d --remove-orphans backend nginx dozzle
+
+          echo "Probing gateway from inside fyp-backend..."
+          $DOCKER exec fyp-backend python -c "import urllib.request; print(urllib.request.urlopen('http://host.docker.internal:8001/health', timeout=5).read().decode())"
+          echo "Probing gateway from inside fyp-backend with httpx..."
+          $DOCKER exec fyp-backend python -c "import httpx; print(httpx.get('http://host.docker.internal:8001/health', timeout=5, trust_env=False).text)"
+          echo "Re-probing gateway from inside fyp-backend after backend startup settles..."
+          sleep 10
+          $DOCKER exec fyp-backend python -c "import httpx; print(httpx.get('http://host.docker.internal:8001/health', timeout=5, trust_env=False).text)" || {
+            echo "::error::Gateway became unreachable after backend startup"
+            tail -n 160 /Users/ituser/gateway.log || true
+            exit 1
+          }
+          echo "Probing gateway embeddings from inside fyp-backend..."
+          $DOCKER exec fyp-backend python -c "import httpx; r=httpx.post('http://host.docker.internal:8001/embeddings', json={'model':'bge-m3:latest','input':'gateway embedding deploy probe'}, timeout=30, trust_env=False); print(r.status_code, r.text[:500]); r.raise_for_status()" || {
+            echo "::error::Gateway embeddings probe failed"
+            tail -n 200 /Users/ituser/gateway.log || true
+            exit 1
+          }
+          end=$(date +%s)
+          duration=$((end - start))
+
+          echo "duration=$duration" >> "$GITHUB_OUTPUT"
+
+      - name: docker logging
+        id: docker_logs
+        if: always()
+        run: |
+          DOCKER_LOGS="/Users/ituser/postgres.log"
+          /Applications/Docker.app/Contents/Resources/bin/docker compose -f docker-compose.prod.yml logs postgres --tail=200 > "$DOCKER_LOGS" 2>&1 || true 
+          echo "docker_logs=$DOCKER_LOGS" >> "$GITHUB_OUTPUT"
+
+      - name: discord notify deploy finished (with edit) (with logs)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RESP: ${{ steps.discord.outputs.resp }}
+          STATUS: ${{ job.status }}
+          DURATION: ${{ steps.deploy.outputs.duration }}
+          DOCKER_LOGS: ${{ steps.docker_logs.outputs.docker_logs }}
+        run: |
+          docker_logs="$(tail -c 1500 "$DOCKER_LOGS" 2>/dev/null || true)"
+
+          if [ "$STATUS" = "success" ]; then 
+            MESSAGE=$'***搞掂 ٩(ˊᗜˋ\*)و 用咗 '"${DURATION}"'秒*** :thumbs_up:'
+          else
+            MESSAGE='炒咗啊屌 QAQ <@131614435067297792> <@672003575408492544> 快d fix!! 💢 ( / `ᜊˊ )/❗'
+          fi
+
+          content="$MESSAGE"$'\n\n'"Logs:"$'\n'"$docker_logs"
+
+          payload="$(python3 -c 'import json,sys; print(json.dumps({"content": sys.stdin.read()}))' <<< "$content")"
+
+          curl -X PATCH -H "Content-Type: application/json" \
+            -d "$payload" \
+            "${DISCORD_WEBHOOK_URL}/messages/${RESP}"

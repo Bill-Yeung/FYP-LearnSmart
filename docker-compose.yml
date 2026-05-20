@@ -1,0 +1,183 @@
+# Local Development Environment
+
+services:
+
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: fyp-wireguard
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./deploy/wireguard:/config/wg_confs
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 30s
+      timeout: 5s
+      retries: 1
+      start_period: 5s
+
+  smtp-relay:
+    image: juanluisbaptiste/postfix:latest
+    container_name: fyp-smtp-relay
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      SMTP_SERVER: ${SMTP_RELAY_SERVER}
+      SMTP_PORT: ${SMTP_RELAY_PORT}
+      SERVER_HOSTNAME: ${SMTP_RELAY_HOSTNAME}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "postfix status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      cache_from:
+        - type=local,src=/tmp/.buildx-cache/backend
+      x-bake:
+        cache-to:
+          - type=local,dest=/tmp/.buildx-cache/backend,mode=max
+    container_name: fyp-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./backend:/app
+      - upload_data:${UPLOAD_DIR}
+      - pip_cache:/root/.cache/pip
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      smtp-relay:
+        condition: service_healthy
+      wireguard:
+        condition: service_started
+    networks:
+      - fyp-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  postgres:
+    image: postgres:16
+    container_name: fyp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init_pg_ddl.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./backend/database/init_pg_function.sql:/docker-entrypoint-initdb.d/02_functions.sql:ro
+      - ./backend/database/init_pg_taxonomy.sql:/docker-entrypoint-initdb.d/03_taxonomy.sql:ro
+      - ./backend/database/init_pg_data.sql:/docker-entrypoint-initdb.d/04_data.sql:ro
+      - ./backend/database/init_pg_polyhaven.sql:/docker-entrypoint-initdb.d/05_polyhaven.sql:ro
+      - ./backend/database/init_pg_polyhaven2.sql:/docker-entrypoint-initdb.d/06_polyhaven2.sql:ro
+      - ./backend/database/init_pg_done.sql:/docker-entrypoint-initdb.d/99_done.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} && psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c 'SELECT 1 FROM _init_complete LIMIT 1;' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - fyp-network
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.0
+    container_name: fyp-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"  # HTTP port
+      - "6334:6334"  # gRPC port
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q ':18BD' /proc/net/tcp || grep -q ':18BD' /proc/net/tcp6 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fyp-network
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: fyp-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
+    ports:
+      - "7474:7474"  # Visual port
+      - "7687:7687"  # Direct port
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q ':1E07' /proc/net/tcp || grep -q ':1E07' /proc/net/tcp6 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fyp-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: fyp-ollama
+    restart: unless-stopped
+    environment:
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_MAX_REQUESTS}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS}
+      - OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU}
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+        reservations:
+          memory: 4G
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q ':2CAA' /proc/net/tcp || grep -q ':2CAA' /proc/net/tcp6 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fyp-network
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  neo4j_data:
+  neo4j_logs:
+  ollama_data:
+  upload_data:
+  pip_cache:
+
+networks:
+  fyp-network:
+    driver: bridge

@@ -1,0 +1,2 @@
+// Production configuration
+BACKEND_URL = https:$()/$()/your-domain.com

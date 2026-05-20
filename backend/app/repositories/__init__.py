@@ -1,0 +1,20 @@
+from app.repositories.user_repository import UserRepository
+from app.repositories.concept_repository import ConceptRepository
+from app.repositories.taxonomy_repository import TaxonomyRepository
+from app.repositories.session_repository import SessionRepository
+from app.repositories.password_reset_repository import PasswordResetRepository
+from app.repositories.source_repository import SourceRepository
+from app.repositories.assessment_repository import AssessmentRepository
+from app.repositories.learningpath_repository import LearningPathRepository
+from app.repositories.relationship_repository import RelationshipRepository
+from app.repositories.media_repository import MediaRepository
+from app.repositories.procedure_repository import ProcedureRepository
+from app.repositories.example_repository import ExampleRepository
+from app.repositories.learningobject_repository import LearningObjectRepository
+from app.repositories.teachback_repository import TeachBackRepository
+from app.repositories.qdrant_repository import QdrantRepository, qdrant_repository
+from app.repositories.neo4j_repository import Neo4jRepository, neo4j_repository
+from app.repositories.diagram_repository import DiagramRepository
+from app.repositories.chat_repository import ChatRepository
+from app.repositories.user_preferences_repository import UserPreferencesRepository
+from app.repositories.email_change_otp_repository import EmailChangeOtpRepository

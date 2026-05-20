@@ -1,0 +1,7 @@
+type,question,answer
+# Standard flashcard (type=standard): only `question` and `answer` are required.
+standard,What is the capital of France?,Paris
+standard,What is 2+2?,4
+
+# Example with commas inside quoted fields (standard)
+standard,"Who wrote ""Pride and Prejudice""?","Jane Austen"

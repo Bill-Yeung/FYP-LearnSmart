@@ -1,0 +1,470 @@
+# =============================================================
+# Python
+# github.com/github/gitignore/blob/main/Python.gitignore
+# =============================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+*.lcov
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff
+instance/
+.webassets-cache
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# pyenv
+# .python-version
+
+# pipenv
+# Pipfile.lock
+
+# UV
+# uv.lock
+
+# poetry
+# poetry.lock
+# poetry.toml
+
+# pdm
+.pdm-python
+.pdm-build/
+
+# pixi
+.pixi/*
+!.pixi/config.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule*
+celerybeat.pid
+
+# Redis
+*.rdb
+*.aof
+*.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Ruff
+.ruff_cache/
+
+# PyPI
+.pypirc
+
+# Streamlit
+.streamlit/secrets.toml
+
+# =============================================================
+# Node.js
+# github.com/github/gitignore/blob/main/Node.gitignore
+# =============================================================
+
+# Logs
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+
+# Grunt
+.grunt
+
+# Bower
+bower_components
+
+# node-waf
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional caches
+.npm
+.eslintcache
+.stylelintcache
+.node_repl_history
+
+# npm pack
+*.tgz
+
+# Yarn
+.yarn-integrity
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# dotenv
+.env
+.env.*
+!.env.example
+
+# parcel
+.cache
+.parcel-cache
+
+# Next.js
+.next
+out
+.output
+
+# Nuxt.js
+.nuxt
+dist
+
+# Gatsby
+# public
+
+# vuepress
+.vuepress/dist
+.temp
+
+# vitepress
+**/.vitepress/dist
+**/.vitepress/cache
+
+# SvelteKit
+.svelte-kit/
+
+# Docusaurus
+.docusaurus
+
+# Serverless
+.serverless/
+
+# FuseBox
+.fusebox/
+
+# DynamoDB Local
+.dynamodb/
+
+# Firebase
+.firebase/
+
+# TernJS
+.tern-port
+
+# VS Code extension testing
+.vscode-test
+
+# pnpm
+.pnpm-store
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+.vite/
+
+# =============================================================
+# Swift / Xcode
+# github.com/github/gitignore/blob/main/Swift.gitignore
+# =============================================================
+
+## User settings
+xcuserdata/
+
+## Obj-C/Swift specific
+*.hmap
+
+## App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+## Swift Package Manager
+.build/
+# .swiftpm
+
+## CocoaPods
+# Pods/
+# *.xcworkspace
+
+## Carthage
+Carthage/Build/
+
+## Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Xcode / visionOS specific
+*.xcuserdatad
+*.xcscmblueprint
+DerivedData/
+
+# Reality Composer / AR resources
+*.reality
+*.realityfile
+*.realityproject
+*.arexperience
+*.rcproject
+
+# Metal
+*.air
+*.metallib
+
+# =============================================================
+# Environment & Secrets
+# =============================================================
+
+.env.prod
+.env.production
+.env.local
+.env.development
+.env.prod.cloud
+
+# API keys & credentials
+*.pem
+*.key
+key
+*.cert
+cookies.jar
+cookies.txt
+credentials.json
+service-account.json
+
+# =============================================================
+# IDEs & Editors
+# =============================================================
+
+# VSCode
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim / Emacs swap files
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+
+# IDE settings
+.claude/
+
+# =============================================================
+# Operating Systems
+# =============================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# =============================================================
+# Docker
+# =============================================================
+
+docker-compose.override.yml
+docker-compose.prod.cloud.yml
+deploy/nginx/nginx.cloud.conf
+deploy/nginx/Dockerfile.cloud
+deploy/wireguard/*.conf
+.dockerignore
+
+# =============================================================
+# Databases
+# =============================================================
+
+*.db
+*.sqlite
+*.sqlite3
+*.sql.gz
+
+# =============================================================
+# Testing & Coverage
+# =============================================================
+
+coverage/
+
+# =============================================================
+# Temporary Files
+# =============================================================
+
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.orig
+
+# =============================================================
+# Project-Specific
+# =============================================================
+
+# Uploads
+backend/uploads/
+
+# Logs
+postgres.log
+
+# ML models
+backend/models/
+
+# Debug / test scripts
+debug_db.py
+backend/test_asset_api.py
+backend/simple_test_server.py
+backend/get_assets.py
+backend/__init__.py
+
+# Xcode project file with local paths
+apps/ARVR/Testing Ground/Memory Palace.xcodeproj/project.pbxproj
